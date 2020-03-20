@@ -7,10 +7,12 @@ public class CubeMotion : MonoBehaviour
 	public float speed = 1;
 	public GameObject explosion;
 	public Transform campos;
+    public AudioSource planeAudio;
 	const float hlimit = 100;
 	Rigidbody rb;
 	float prevSpeed = -1;
-	Vector3 rot;
+	Vector3 rot,startPos;
+    Quaternion startRot;
 	GUIStyle style=new GUIStyle();
 	
     // Start is called before the first frame update
@@ -18,6 +20,8 @@ public class CubeMotion : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         style.normal.textColor = Color.black;
+        startPos = gameObject.transform.position;
+        startRot = gameObject.transform.rotation;
     }
 
     // Update is called once per frame
@@ -62,12 +66,27 @@ public class CubeMotion : MonoBehaviour
     }
 
     void OnCollisionEnter(){
-    	Debug.Log("Collision!!!");
     	rb.isKinematic = true;
     	rb.velocity = new Vector3(0,0,0);
     	rb.angularVelocity = new Vector3(0,0,0);
-    	explosion.SetActive(true);
+        planeAudio.Stop();
+        StartCoroutine(OnEndExplosion());
     }
 
+    IEnumerator OnEndExplosion()
+    {
+        explosion.SetActive(true);
+        yield return new WaitForSeconds(explosion.GetComponent<ParticleSystem>().main.duration);
+        gameObject.transform.position = startPos;
+        gameObject.transform.rotation = startRot;
+        rot = new Vector3(0,0,0);
+        speed = 1;
+        prevSpeed = -1;
+        rb.isKinematic = false;
+        planeAudio.Play();
+        explosion.SetActive(false);
+        Vector3 dir = gameObject.transform.forward;
+        rb.velocity = dir*speed*10;
+    }
 
 }
